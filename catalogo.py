@@ -36,35 +36,61 @@ if busqueda:
 else:
     df_filtrado = df
 
-# 4. Mostrar los productos en un diseño de cuadrícula (Tarjetas limpias y alineadas)
-# Procesamos los productos filtrados en bloques de 3 en 3
-for i in range(0, len(df_filtrado), 3):
-    # Selecciona un grupo de hasta 3 productos
-    bloque = df_filtrado.iloc[i:i+3]
-    
-    # Crea 3 columnas limpias para esta fila concreta
-    cols = st.columns(3)
-    
-    # Coloca cada producto del bloque en su columna correspondiente (0, 1 o 2)
-    for idx, (_, fila) in enumerate(bloque.iterrows()):
-        with cols[idx]:
-            with st.container(border=True):
-                # Ruta de la foto
-                ruta_foto = os.path.join("fotos", str(fila['foto']))
+# ---------------------------------------------------------
+        # SECCIÓN 4: DISEÑO DE LAS TARJETAS (AGRUPADO POR CÓDIGO)
+        # ---------------------------------------------------------
+        
+        # Agrupamos el Excel filtrado por Código para juntar los duplicados
+productos_agrupados = df_filtrado.groupby("Codigo")
+
+for codigo, filas_producto in productos_agrupados:
+    primera_fila = filas_producto.iloc[0]
+    # (El resto de tu código de las tarjetas que va aquí dentro...)
+            # Cogemos la primera fila para los datos fijos del producto
+    primera_fila = filas_producto.iloc[0]
+            
+            # Creamos el contenedor visual para la tarjeta del producto
+    with st.container(border=True):
                 
-                # Muestra la foto o el aviso si no existe
+                # Fila 1: Imagen del producto
+                # --- CAMBIA TU LÍNEA DE ST.IMAGE POR ESTE BLOQUE SEGURO ---
+                import os
+
+                ruta_foto = f"fotos/{primera_fila['foto']}"
+
+                # Comprobamos si la foto existe físicamente antes de intentar pintarla
                 if os.path.exists(ruta_foto):
-                    st.image(ruta_foto, use_container_width=True)
+                    st.image(ruta_foto, width=150)
                 else:
-                    st.warning("📸 Foto no disponible")
+                    # Si no existe, ponemos un aviso amigable o un icono de una caja
+                    st.warning("📷 Imagen no disponible")
                 
-                # Datos del producto
-                st.subheader(fila['Descripcion'])
-                st.write(f"**Código:** {fila['Codigo']}")
-                st.write(f"**PVP:** {fila['PVP']}")
-                st.write(f"**Dto:** {fila['Dto']}")
+                # Fila 2: Título del artículo y su Código único
+                st.subheader(primera_fila["Descripcion"])
+                st.caption(f"Código: {codigo}")
                 
+                # Fila 3: Precio Neto estándar (Base)
+                st.metric(label="Precio Neto Base", value=f"{primera_fila['neto']:.2f} €")
                 
-                # Precio
+                # Fila 4: Comprobamos si tiene ofertas por volumen en sus filas
+                tiene_oferta = False
                 
-                st.metric(label="Precio Neto", value=f"{fila['neto']:.2f} €")
+                # Recorremos las filas agrupadas para ver si alguna tiene precio de oferta
+                for _, fila in filas_producto.iterrows():
+                    if pd.notna(fila["oferta"]) and fila["oferta"] > 0:
+                        tiene_oferta = True
+                        break # En cuanto encuentra una, ya sabemos que tiene promo
+                
+                # Si se confirma que hay ofertas, pintamos el desglose
+                if tiene_oferta:
+                    st.markdown("---") # Línea fina de separación
+                    st.markdown("💥 **Precios Especiales por Cantidad:**")
+                    
+                    # Dibujamos cada tramo de oferta que venga en el Excel
+                    for _, fila in filas_producto.iterrows():
+                        if pd.notna(fila["oferta"]) and fila["oferta"] > 0:
+                            # Leemos la cantidad mínima (si está vacía, por defecto es 1)
+                            cantidad_minima = int(fila["cant of"]) if pd.notna(fila["cant of"]) else 1
+                            
+                            # Imprimimos la línea de la oferta formateada
+                            st.write(f"📦 Llevando **{cantidad_minima} ud.** o más ➔ **{fila['oferta']:.2f} €** / ud")
