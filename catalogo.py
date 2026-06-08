@@ -36,6 +36,7 @@ else:
     df_filtrado = df  # Si no hay búsqueda, mostramos todos los productos
 
 # =========================================================
+# =========================================================
 # SECCIÓN 4: DISEÑO EN 3 COLUMNAS (AGRUPADO POR CÓDIGO)
 # =========================================================
 
@@ -70,8 +71,18 @@ for i in range(0, len(productos_agrupados), 3):
                 st.subheader(primera_fila["Descripcion"])
                 st.caption(f"Código: {codigo}")
                 
-                # 3. Precio base de la primera fila
-                st.metric(label="Precio Neto Base", value=f"{primera_fila['neto']:.2f} €")
+                st.markdown("---") # Una línea fina separadora
+                
+                # 3. Bloque de precios detallados (PVP, Dto y Neto)
+                pvp_valor = primera_fila["PVP"]
+                dto_valor = primera_fila["Dto"]
+                neto_valor = primera_fila["neto"]
+                
+                st.write(f"🔹 **PVP:** {pvp_valor:.2f} €")
+                st.write(f"📉 **Descuento:** {dto_valor}%")
+                
+                # Mostramos el Precio Neto Comercial en grande destacado
+                st.metric(label="Precio Neto Comercial", value=f"{neto_valor:.2f} €")
                 
                 # 4. Comprobación y desglose de ofertas por cantidad
                 tiene_oferta = any(pd.notna(f["oferta"]) and f["oferta"] > 0 for _, f in filas_producto.iterrows())
