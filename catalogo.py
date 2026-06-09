@@ -5,6 +5,17 @@ import pandas as pd
 # Mantengo el Cloud Name que vimos en tu captura anterior
 CLOUD_NAME = "dwydwjpos" 
 CARPETA_CLOUDINARY = "productos" 
+# 2. En la sección del detalle del artículo derecho, añade esto:
+nombre_foto = str(articulo_seleccionado['foto']).strip()
+
+if nombre_foto and nombre_foto != "nan" and nombre_foto != "None":
+    # Construimos la URL de Cloudinary
+    url_foto = f"https://res.cloudinary.com/{CLOUD_NAME}/image/upload/{CARPETA_CLOUDINARY}/{nombre_foto}"
+    
+    # Pintamos la imagen en la columna derecha
+    st.image(url_foto, caption=f"Ref: {articulo_seleccionado['Codigo']}", use_container_width=True)
+else:
+    st.warning("📸 Foto no disponible en Cloudinary")
 
 # 2. Configuración de la interfaz de la página web
 st.set_page_config(page_title="Catálogo de Productos", page_icon="📦", layout="wide")
