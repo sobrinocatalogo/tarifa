@@ -2,38 +2,27 @@ import streamlit as st
 import pandas as pd
 
 # 1. CONFIGURACIÓN DE TU CLOUDINARY
-# Mantengo el Cloud Name que vimos en tu captura anterior
 CLOUD_NAME = "dwydwjpos" 
 CARPETA_CLOUDINARY = "productos" 
-# 2. En la sección del detalle del artículo derecho, añade esto:
-nombre_foto = str(articulo_seleccionado['foto']).strip()
 
-if nombre_foto and nombre_foto != "nan" and nombre_foto != "None":
-    # Construimos la URL de Cloudinary
-    url_foto = f"https://res.cloudinary.com/{CLOUD_NAME}/image/upload/{CARPETA_CLOUDINARY}/{nombre_foto}"
-    
-    # Pintamos la imagen en la columna derecha
-    st.image(url_foto, caption=f"Ref: {articulo_seleccionado['Codigo']}", use_container_width=True)
-else:
-    st.warning("📸 Foto no disponible en Cloudinary")
-
-# 2. Configuración de la interfaz de la página web
+# 2. Configuración de la página web (Diseño ancho)
 st.set_page_config(page_title="Catálogo de Productos", page_icon="📦", layout="wide")
 
 st.title("📦 Catálogo Digital para Comerciales")
-st.write("Consulta la lista de precios e imágenes en tiempo real.")
+st.write("Consulta la lista de precios e imágenes en tiempo real desde la nube.")
 
 # 3. Cargar los datos del Excel
 try:
-    df = pd.read_excel("base_datos.xlsx")
+    # Busca tu archivo; recuerda que debe llamarse exactamente así en tu carpeta
+    df = pd.read_excel("base_datos.xlsx") 
 except Exception as e:
     st.error(f"No se pudo leer el archivo Excel. Asegúrate de que se llama 'base_datos.xlsx'. Error: {e}")
     st.stop()
 
 # 4. Buscador en la parte superior
-busqueda = st.text_input("🔍 Buscar por descripción o código:", "")
+busqueda = st.text_input("🔍 Buscar por descripción o código de artículo:", "")
 
-# Filtrar el Excel según tus campos reales ('Descripcion' y 'Codigo')
+# Filtrar las filas del Excel según lo que escriba el comercial
 if busqueda:
     df_filtrado = df[
         df['Descripcion'].astype(str).str.contains(busqueda, case=False) |
@@ -42,28 +31,31 @@ if busqueda:
 else:
     df_filtrado = df
 
-# 5. Mostrar los productos en una cuadrícula de 3 columnas
+# 5. ESTRUCTURA DE 3 COLUMNAS POR FILA
 cols = st.columns(3)
 
+# Recorremos los artículos del Excel uno a uno
 for indice, fila in df_filtrado.iterrows():
+    # Este truco matemática (% 3) va repartiendo los artículos en las 3 columnas de forma limpia
     with cols[indice % 3]:
+        # Creamos una tarjeta con borde para cada producto
         with st.container(border=True):
             
-            # --- GESTIÓN DE LA IMAGEN DESDE CLOUDINARY ---
+            # --- CONTROL DE LA IMAGEN DESDE CLOUDINARY ---
             nombre_foto = str(fila['foto']).strip()
             
-            if nombre_foto and nombre_foto != "nan":
-                # Fabricamos la URL combinando tu nube con el nombre real de tu celda (ej: 68020142.jpg)
+            if nombre_foto and nombre_foto != "nan" and nombre_foto != "None":
+                # Creamos la URL que apunta directamente a tu foto subida (ej: 68020142.jpg)
                 url_foto = f"https://res.cloudinary.com/{CLOUD_NAME}/image/upload/{CARPETA_CLOUDINARY}/{nombre_foto}"
                 st.image(url_foto, use_container_width=True)
             else:
-                st.warning("📸 Foto no especificada")
+                st.warning("📸 Foto no disponible")
             
             # --- DATOS REALES DE TU EXCEL ---
             st.subheader(fila['Descripcion'])
             st.write(f"**Código:** {fila['Codigo']}")
             
-            # Mostramos el PVP formateado con dos decimales
+            # Mostramos el PVP formateado con dos decimales de forma segura
             try:
                 precio_pvp = float(fila['PVP'])
                 st.metric(label="PVP", value=f"{precio_pvp:.2f} €")
